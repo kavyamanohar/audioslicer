@@ -64,18 +64,18 @@ def main():
     print('Extracting information from srt_file(s) to csv_files')
     for file in glob('./srt_files/*.srt'):
         convert_srt_to_csv(file)
-    print('%s-file(s) converted and saved as csv-files to ./ready_for_slice' %srt_counter)
+    print('%s-file(s) converted and saved as csv-files to ./temp_files' %srt_counter)
     print('---------------------------------------------------------------------')
 
-    path_audio_processed = './ready_for_slice/'
-    print("Copying audio files to ./ready_for_slice")
+    temp_files = './temp_files/'
+    print("Copying audio files to ./temp_files")
     for file in os.listdir(audio_path):
             if(file.endswith('.wav')):
-                shutil.copy(audio_path+file, path_audio_processed+file )
+                shutil.copy(audio_path+file, temp_files+file )
 
     # Slicing audio
     print('Slicing audio according to start- and end_times of transcript_csvs...')
-    for item in glob('./ready_for_slice/*.csv'):
+    for item in glob('./temp_files/*.csv'):
         print(item)
         wav_item = item.replace('.csv','.wav')
         print(wav_item)
@@ -94,19 +94,15 @@ def main():
     print('---------------------------------------------------------------------')
 
     #now join all seperate csv files
-    merge_csv('./ready_for_slice/')
+    merge_csv('./temp_files/')
     print('Merged csv with all transcriptions created.')
     print('---------------------------------------------------------------------')
     #merge the csv with transcriptions and the file-csv with paths and sizes
-    transcript_path = './merged_csv/Full_Transcript.csv'
-    DS_path = './merged_csv/Filepath_Filesize.csv'
+    transcript_path = './metadata/Full_Transcript.csv'
+    DS_path = './metadata/Filepath_Filesize.csv'
     merge_transcripts_and_wav_files(transcript_path, DS_path)
     print('Final DS csv generated.')
     print('---------------------------------------------------------------------')
-
-    # write transcript to text-file for language model
-    df_text = pd.read_csv('./merged_csv/DS_training_final.csv')
-    df_text['transcript'].to_csv('./final_csv/txt_for_lm.txt', header=None, index=None, mode='a')
 
     #evaluate the scripts execution time
     end_time = time.time()

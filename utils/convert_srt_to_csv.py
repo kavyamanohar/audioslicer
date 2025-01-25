@@ -74,4 +74,4 @@ def convert_srt_to_csv(file):
 
     df_text['start_times'] = df_text['start_times'].apply(conv_int)
 
-    df_text.to_csv('./ready_for_slice/' + file_extension + '.csv', index=False, header=True, encoding='utf-8-sig')
+    df_text.to_csv('./temp_files/' + file_extension + '.csv', index=False, header=True, encoding='utf-8-sig')

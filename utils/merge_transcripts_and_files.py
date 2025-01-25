@@ -33,4 +33,4 @@ def merge_transcripts_and_wav_files(transcript_path, DS_csv):
     #rearrange columns
     df_final = df_final[['wav_filename', 'wav_filesize', 'transcript']]
 
-    df_final.to_csv('./merged_csv/DS_training_final.csv', header=True, index=False, encoding='utf-8-sig')
+    df_final.to_csv('./metadata/DS_training_final.csv', header=True, index=False, encoding='utf-8-sig')

@@ -24,4 +24,4 @@ def create_DS_csv (path):
         df['wav_filesize'] = [filesize]
         df['duration'] = [duration]
         data = data._append(df)
-    data.to_csv('./merged_csv/Filepath_Filesize.csv', header=True, index=False, encoding='utf-8-sig')
+    data.to_csv('./metadata/Filepath_Filesize.csv', header=True, index=False, encoding='utf-8-sig')
