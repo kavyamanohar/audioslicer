@@ -45,7 +45,7 @@ def convert_srt_to_csv(file):
     df_text['transcript'] = [" ".join(i).replace('\n', '') for i in lines]
     df_text['end_times'] = df_text['end_times'].replace(r'\n', '', regex=True)
 
-    df_text['id'] = np.arange(len(df_text))
+    df_text['id'] = np.arange(1,len(df_text)+1)
     id_extension = os.path.basename(file).replace('.srt', '_')
     id_extension = id_extension.replace(' ', '_')
     id_extension = id_extension.replace('-', '_')
