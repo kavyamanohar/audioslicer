@@ -7,9 +7,9 @@ import wave
 import contextlib
 
 
-def create_DS_csv (path):
+def create_metadata(path):
     #this function holds the code to extract the filepath and filesize of all audio in the respective directory
-    print('Extracting filepath and -size for every .wav file in ./sliced_audio')
+    print('Extracting filepath and -size for every .wav file in ./result')
     data = pd.DataFrame(columns=['wav_filename', 'wav_filesize', 'duration'])
     df = pd.DataFrame(columns=['wav_filename', 'wav_filesize', 'duration'])
 
@@ -24,4 +24,4 @@ def create_DS_csv (path):
         df['wav_filesize'] = [filesize]
         df['duration'] = [duration]
         data = data._append(df)
-    data.to_csv('./metadata/Filepath_Filesize.csv', header=True, index=False, encoding='utf-8-sig')
+    data.to_csv('./result/Filepath_Filesize.csv', header=True, index=False, encoding='utf-8-sig')

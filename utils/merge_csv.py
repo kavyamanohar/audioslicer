@@ -9,5 +9,5 @@ def merge_csv(path):
         df = pd.read_csv(entry)
         csv_combined = csv_combined._append(df)
 
-    csv_combined.to_csv('./metadata/Full_Transcript.csv', header=True, index=False, encoding='utf-8-sig')
+    csv_combined.to_csv('./result/Full_Transcript.csv', header=True, index=False, encoding='utf-8-sig')
     print('All csv-files merged')

@@ -10,18 +10,10 @@ def create_directories():
         except OSError:
             print('Creation of directory %s failed' %temp_files)
 
-    sliced_audio = './sliced_audio'
+    result = './result'
 
-    if not os.path.exists(sliced_audio):
+    if not os.path.exists(result):
         try:
-            os.mkdir(sliced_audio)
+            os.mkdir(result)
         except OSError:
-            print('Creation of directory %s failed' %sliced_audio)
-
-    metadata = './metadata'
-
-    if not os.path.exists(metadata):
-        try:
-            os.mkdir(metadata)
-        except OSError:
-            print('Creation of directory %s failed' %metadata)
+            print('Creation of directory %s failed' %result)
