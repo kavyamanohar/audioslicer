@@ -1,9 +1,7 @@
-This is adapted from this [project](https://github.com/sjoerdapp/SRT-to-CSV-and-audio-split) by  Tobias Rordorf. 
-
 # Split audio according to information in srt-file.
 
 
-This repo enables easy splitting of audio files based on the subtitle-info in srt-files and prepare corresponding transcript files.
+This repo enables easy splitting of audio files based on the subtitle-info in srt-files and prepare audio corpus ready to be pushed to huggingface hub.
 
 
 
@@ -11,21 +9,24 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 
 * [Python 3.6](https://www.python.org/)
 * [pydub](https://pypi.org/project/pydub/)
+* [datasets](https://pypi.org/project/datasets/)
+* [soundfile](https://pypi.org/project/soundfile/)
+* [librosa](https://pypi.org/project/librosa/)
 
 ## How to slice
 
-* Place the audio in wav format in `./audio` directory
-* Place the subtitle of the audio in `./srt_files` directory
+* Place the audio in mp3 format in `.data/raw/audio` directory
+* Place the subtitle of the audio in `data/raw/srt` directory
 
 ```
-python slicer.py
+python main.py
 ```
 
-* `./ready_for_slice` directory stores the start_time, end_time and the transcript in csv format
-* sliced audio is saved in .`/sliced_audio` directory
-* `/merged_csv` directory stores audio metadata as csv files
-* `./final_csv` stores the sentences ready for language model training
+* `.data/processed/corpus` directory stores the generated slices, by default in the `train` directory and associated metadata in jsonl format.
+* Audio slices will be created and stored in test split, if you pass `test_contains=["TEST", "VALID"]` argument to `audio_slicing_pipeline`. If any audio file contains the string `test` or `valid` in the file name it will be in the test split of the corpus.
+* If you have your huggingface_hub token stored locally, you can push the corpus sirectly to huggingface hub by:
 
-## TODO
+```
+python push_tohub.py
+```
 
-* Clean up transcript by removing punctuations and unwanted characters

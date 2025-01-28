@@ -1,0 +1,5 @@
+srt
+datasets
+pydub
+soundfile
+librosa
