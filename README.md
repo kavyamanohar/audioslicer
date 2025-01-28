@@ -3,7 +3,30 @@
 
 This repo enables easy splitting of audio files based on the subtitle-info in srt-files and prepare audio corpus ready to be pushed to huggingface hub.
 
+## Project Structure
 
+```.
+├── data
+│   ├── processed
+│   │   └── corpus
+│   │       ├── metadata.jsonl
+│   │       ├── test
+│   │       └── train
+│   └── raw
+│       ├── audio
+│       │   ├── bajaj.mp3
+│       │   └── data.mp3
+│       └── srt
+│           ├── bajaj.srt
+│           └── data.srt
+├── LICENSE
+├── main.py
+├── push_tohub.py
+├── README.md
+├── requirements.txt
+└── src
+    └──audio_slicer.py
+```
 
 ## Prerequisites
 
@@ -17,6 +40,7 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 
 * Place the audio in mp3 format in `.data/raw/audio` directory
 * Place the subtitle of the audio in `data/raw/srt` directory
+* Make sure every mp3 file has a matching transcript filename.
 
 ```
 python main.py
