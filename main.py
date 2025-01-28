@@ -27,7 +27,7 @@ def main():
         srt_dir="data/raw/srt",
         output_dir="data/processed/corpus",
         metadata_file="data/processed/corpus/metadata.jsonl",
-        test_contains=["baj"]
+        test_contains=["TWENTY"]
     )
 
 if __name__ == "__main__":

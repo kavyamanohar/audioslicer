@@ -82,7 +82,7 @@ def audio_slicing_pipeline(audio_dir, srt_dir, output_dir, metadata_file, test_c
             
             # Determine split based on filename
             current_split = "train"
-            if any(test_str in srt_filename.lower() for test_str in test_contains):
+            if any(test_str in srt_filename.upper() for test_str in test_contains):
                 current_split = 'test'
                 
             # Create split-specific output directory
