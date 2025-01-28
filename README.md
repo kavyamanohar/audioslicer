@@ -36,6 +36,11 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 * [soundfile](https://pypi.org/project/soundfile/)
 * [librosa](https://pypi.org/project/librosa/)
 
+## Setup
+1. Clone repository
+2. Create virtual environment
+3. Install dependencies: `pip install -r requirements.txt`
+
 ## How to slice
 
 * Place the audio in mp3 format in `.data/raw/audio` directory
