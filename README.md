@@ -41,9 +41,19 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 2. Create virtual environment
 3. Install dependencies: `pip install -r requirements.txt`
 
+## Trim Audio based on Voice Activity Detection
+
+* Place the audio in mp3/mp4 format in `.data/raw/audio_untrimmed` directory
+
+```
+python vad-trimming.py
+```
+
+* Resultant trimmed audio will be palced in `.data/raw/audio_trimmed` in mp3 format
+
 ## How to slice
 
-* Place the audio in mp3 format in `.data/raw/audio` directory
+* Place the audio in mp3 format in `.data/raw/audio_untrimmed` directory
 * Place the subtitle of the audio in `data/raw/srt` directory
 * Make sure every mp3 file has a matching transcript filename.
 
