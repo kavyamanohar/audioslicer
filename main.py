@@ -8,7 +8,7 @@ def create_data_directories():
     """Create necessary project directories"""
     directories = [
         'data/raw',
-        'data/raw/audio',
+        'data/raw/audio_trimmed',
         'data/raw/srt',
         'data/processed',
         'data/processed/corpus'
@@ -23,7 +23,7 @@ def main():
 
     # Audio Slicing and Metadata Generation
     audio_slicing_pipeline(
-        audio_dir="data/raw/audio",
+        audio_dir="data/raw/audio_trimmed",
         srt_dir="data/raw/srt",
         output_dir="data/processed/corpus",
         metadata_file="data/processed/corpus/metadata.jsonl",
