@@ -53,7 +53,7 @@ python vad-trimming.py
 
 ## How to slice
 
-* Place the audio in mp3 format in `.data/raw/audio_untrimmed` directory
+* Place the audio in mp3 format in `.data/raw/audio_trimmed` directory
 * Place the subtitle of the audio in `data/raw/srt` directory
 * Make sure every mp3 file has a matching transcript filename.
 

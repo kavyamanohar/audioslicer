@@ -43,11 +43,11 @@ def slice_audio(audio_path, srt_path, output_dir, split, metadata):
             duration_seconds = len(sliced_audio) / 1000.0
             
             # Generate output filename
-            output_name = f"{base_filename}-{i}.wav"
+            output_name = f"{base_filename}-{i}.mp3"
             output_filename = os.path.join(output_dir, output_name)
             
             # Export sliced audio
-            sliced_audio.export(output_filename, format="wav")
+            sliced_audio.export(output_filename, format="mp3")
             
             # Add metadata with split directory in file_name
             metadata.append({
