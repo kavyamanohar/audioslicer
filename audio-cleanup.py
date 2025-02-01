@@ -6,7 +6,7 @@ def convert_to_mp3(input_path, output_path):
     """Convert MP4 to MP3 using FFmpeg."""
     try:
         subprocess.run([
-            "ffmpeg", "-i", input_path, "-q:a", "2", "-acodec", "libmp3lame", output_path
+            "ffmpeg","-y", "-i", input_path, "-q:a", "2", "-acodec", "libmp3lame", output_path
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
@@ -15,7 +15,7 @@ def convert_to_mp3(input_path, output_path):
 def detect_silence(input_file, noise_db="-50dB", min_duration="0.5"):
     """Detect silence periods in an audio file using ffmpeg."""
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-y",
         "-i", input_file,
         "-af", f"silencedetect=noise={noise_db}:d={min_duration}",
         "-f", "null",
@@ -47,7 +47,7 @@ def detect_silence(input_file, noise_db="-50dB", min_duration="0.5"):
 
 def get_duration(input_file):
     """Get the duration of an audio file using ffmpeg."""
-    cmd = ["ffmpeg", "-i", input_file, "-f", "null", "-"]
+    cmd = ["ffmpeg","-y", "-i", input_file, "-f", "null", "-"]
     process = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -65,7 +65,7 @@ def get_duration(input_file):
 def trim_audio(input_file, output_file, start_time, end_time):
     """Trim audio file between start_time and end_time."""
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-y",
         "-loglevel", "panic",
         "-i", input_file,
         "-ss", str(start_time),
@@ -78,7 +78,7 @@ def trim_audio(input_file, output_file, start_time, end_time):
 def filter_audio(input_file, output_file):
     """Trim audio file between start_time and end_time."""
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-y",
         "-loglevel", "panic",
         "-i", input_file,
         "-af", "highpass=f=200, anlmdn=s=2, afftdn=nf=-25, lowpass=f=3000",
@@ -143,7 +143,7 @@ def trim_silence(input_file, output_file, noise_db="-50dB", min_duration="2", pa
     
     # Concatenate segments
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-y",
         "-loglevel", "panic",
         "-f", "concat",
         "-safe", "0",
