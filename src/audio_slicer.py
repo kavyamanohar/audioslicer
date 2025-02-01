@@ -95,7 +95,7 @@ def audio_slicing_pipeline(audio_dir, srt_dir, output_dir, metadata_file, test_c
                 logging.warning(f"No audio file found for {srt_filename}")
     
     # Write metadata to JSONL file - each entry on a new line
-    with open(metadata_file, 'w', encoding='utf-8') as f:
+    with open(metadata_file, 'a', encoding='utf-8') as f:
         for entry in metadata:
             json_line = json.dumps(entry)
             f.write(json_line + '\n')

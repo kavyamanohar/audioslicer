@@ -46,7 +46,7 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 * Place the audio in mp3/mp4 format in `.data/raw/audio_untrimmed` directory
 
 ```
-python vad-trimming.py
+python audio-cleanup.py
 ```
 
 * Resultant trimmed audio will be palced in `.data/raw/audio_trimmed` in mp3 format
@@ -69,3 +69,6 @@ python main.py
 python push_tohub.py
 ```
 
+## DOCUMENTATION
+
+https://kavyamanohar.gitbook.io/court-room-asr
