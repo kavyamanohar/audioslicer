@@ -74,11 +74,25 @@ def trim_audio(input_file, output_file, start_time, end_time):
         output_file
     ]
     subprocess.run(cmd)
+    
+def filter_audio(input_file, output_file):
+    """Trim audio file between start_time and end_time."""
+    cmd = [
+        "ffmpeg",
+        "-loglevel", "panic",
+        "-i", input_file,
+        "-af", "highpass=f=200, anlmdn=s=2, afftdn=nf=-25, lowpass=f=3000",
+        output_file
+    ]
+    subprocess.run(cmd)
 
 def trim_silence(input_file, output_file, noise_db="-50dB", min_duration="2", padding=0.1):
     """Remove silence from audio file while keeping speech segments."""
-    silence_periods = detect_silence(input_file, noise_db, min_duration)
     
+    temp_file = "temp_file.mp3"
+    filter_audio(input_file, temp_file) 
+    silence_periods = detect_silence(temp_file, noise_db, min_duration)
+    os.remove(temp_file)
     if not silence_periods:
         print(f"No silence detected in {input_file}")
         return False
@@ -103,6 +117,8 @@ def trim_silence(input_file, output_file, noise_db="-50dB", min_duration="2", pa
     if total_duration - last_end > padding:
         segment_start = max(0, last_end - padding)
         segments.append((segment_start, total_duration))
+        
+    print("Found", len(segments), "silence segments.")
     
     # Create temporary directory for segments
     temp_dir = "temp_segments"
@@ -178,8 +194,8 @@ if __name__ == "__main__":
         success = trim_silence(
             input_path,
             output_mp3_path,
-            noise_db="-50dB",
-            min_duration="2",
+            noise_db="-45dB",
+            min_duration="1",
             padding=0.1
         )
         
