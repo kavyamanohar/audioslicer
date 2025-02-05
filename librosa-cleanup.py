@@ -25,6 +25,7 @@ def convert_to_mp3(input_file):
 
 def process_audio_chunk(y, sr, noise_thresh, silence_threshold=-50, min_silence_duration=1.0, pad_duration=0.1):
     """Process a single audio chunk"""
+  
     S = librosa.stft(y)
     mag = np.abs(S)
     phase = np.angle(S)
@@ -35,18 +36,22 @@ def process_audio_chunk(y, sr, noise_thresh, silence_threshold=-50, min_silence_
     y_cleaned = librosa.istft(mag_cleaned * np.exp(1j * phase))
     
     # Silence removal with padding
-    intervals = librosa.effects.split(
+    nonsilence_intervals = librosa.effects.split(
         y_cleaned,
         top_db=-silence_threshold,
         frame_length=2048,
         hop_length=512
     )
-    
+
+    print("Number of non-silent intervals:",len(nonsilence_intervals), nonsilence_intervals[0])
+    if len(nonsilence_intervals) == 1:
+        return []
+
     # Add padding to intervals
     pad_samples = int(pad_duration * sr)
     padded_intervals = []
     
-    for start, end in intervals:
+    for start, end in nonsilence_intervals:
         new_start = max(0, start - pad_samples)
         new_end = min(len(y_cleaned), end + pad_samples)
         
@@ -156,8 +161,8 @@ def process_audio(input_file, output_file, chunk_duration=3600, target_sr=16000,
 
 # Example usage
 if __name__ == "__main__":
-    input_file = "MP3 14-03-2024.mp3"
-    output_file = "processed_output.mp3"
+    input_file = "data/raw/audio_original/MP3 12-12-23 SC.mp4"
+    output_file = "data/raw/audio_cleaned/MP3 12-12-23 SC.mp3"
     
     process_audio(
         input_file=input_file,

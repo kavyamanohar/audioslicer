@@ -76,7 +76,7 @@ def trim_audio(input_file, output_file, start_time, end_time):
     subprocess.run(cmd)
     
 def filter_audio(input_file, output_file):
-    """Trim audio file between start_time and end_time."""
+    """Filter out noise from audio file using ffmpeg."""
     cmd = [
         "ffmpeg", "-y",
         "-loglevel", "panic",
@@ -186,6 +186,7 @@ if __name__ == "__main__":
         
         # Convert MP4 to MP3 if needed
         if audio_file.lower().endswith(".mp4"):
+            print("converting", input_path, "to mp3" )
             if not convert_to_mp3(input_path, output_mp3_path):
                 print(f"Failed to convert {audio_file} to MP3")
                 continue

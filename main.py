@@ -23,11 +23,11 @@ def main():
 
     # Audio Slicing and Metadata Generation
     audio_slicing_pipeline(
-        audio_dir="data/raw/audio_trimmed",
+        audio_dir="data/raw/audio_cleaned",
         srt_dir="data/raw/srt",
         output_dir="data/processed/corpus",
         metadata_file="data/processed/corpus/metadata.jsonl",
-        test_contains=["TWENTY"]
+        test_contains=["TWO"]
     )
 
 if __name__ == "__main__":
