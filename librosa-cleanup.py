@@ -23,41 +23,46 @@ def convert_to_mp3(input_file):
         print(f"Error converting file: {e.stderr.decode()}")
         raise
 
-def process_audio_chunk(y, sr, noise_thresh, silence_threshold=-50, min_silence_duration=1.0, pad_duration=0.1):
+def process_audio_chunk(y, sr, silence_threshold=-50, pad_duration=0.1):
     """Process a single audio chunk"""
-  
     S = librosa.stft(y)
-    mag = np.abs(S)
+    freqs = librosa.fft_frequencies(sr=sr, n_fft=2048)
+    
+    # Create bandpass mask
+    mask = (freqs >= 300) & (freqs <= 3000)
+    mask = mask.reshape(-1, 1)
+    
+    # Apply filter in frequency domain
+    mag = np.abs(S) * mask
     phase = np.angle(S)
     
-    # Apply noise reduction
-    mask = (mag > noise_thresh)
-    mag_cleaned = mag * mask
-    y_cleaned = librosa.istft(mag_cleaned * np.exp(1j * phase))
+    # Convert back to time domain
+    y_filtered = librosa.istft(mag * np.exp(1j * phase))
     
+   
     # Silence removal with padding
     nonsilence_intervals = librosa.effects.split(
-        y_cleaned,
+        y_filtered,
         top_db=-silence_threshold,
         frame_length=2048,
         hop_length=512
     )
-
-    print("Number of non-silent intervals:",len(nonsilence_intervals), nonsilence_intervals[0])
+    print("number of nonsilence intervals", len(nonsilence_intervals))
+    print(nonsilence_intervals[0:2])
     if len(nonsilence_intervals) == 1:
         return []
-
+    
     # Add padding to intervals
     pad_samples = int(pad_duration * sr)
     padded_intervals = []
     
     for start, end in nonsilence_intervals:
         new_start = max(0, start - pad_samples)
-        new_end = min(len(y_cleaned), end + pad_samples)
-        
-        if (new_end - new_start) / sr >= min_silence_duration:
-            padded_intervals.append((new_start, new_end))
-    
+        new_end = min(len(y_filtered), end + pad_samples)     
+        padded_intervals.append((new_start, new_end))
+    print("Length of padded Intervals", len(padded_intervals))
+    print(padded_intervals[0:2])
+
     # Merge overlapping intervals
     if padded_intervals:
         merged = [padded_intervals[0]]
@@ -69,7 +74,7 @@ def process_audio_chunk(y, sr, noise_thresh, silence_threshold=-50, min_silence_
                 merged.append(current)
         
         y_processed = np.concatenate([
-            y_cleaned[start:end] for start, end in merged
+            y_filtered[start:end] for start, end in merged
         ])
     else:
         y_processed = np.zeros(int(0.1 * sr))
@@ -77,7 +82,7 @@ def process_audio_chunk(y, sr, noise_thresh, silence_threshold=-50, min_silence_
     return y_processed
 
 def process_audio(input_file, output_file, chunk_duration=3600, target_sr=16000, 
-                   silence_threshold=-50, min_silence_duration=1.0, pad_duration=0.1):
+                   silence_threshold=-50, pad_duration=0.1):
     """Process long audio file in chunks and concatenate"""
     # Create temporary copy of input file
     temp_input = tempfile.mktemp(suffix=Path(input_file).suffix)
@@ -96,17 +101,7 @@ def process_audio(input_file, output_file, chunk_duration=3600, target_sr=16000,
         print("Loading Entire Audio")
         y, sr = librosa.load(converted_file, sr=target_sr, mono=True)
         
-        # Estimate noise profile
-        print("estimating noise profile from first 1 second of audio")
-        n_fft = 2048
-        y1 = y[:sr]
-        S = librosa.stft(y1)
-        mag = np.abs(S)
-        phase = np.angle(S)
-        noise_mag = mag[:, :int(sr/n_fft)]
-        noise_thresh = np.mean(noise_mag, axis=1) * 2
-        noise_thresh = noise_thresh.reshape(-1, 1)
-        
+       
         # Calculate chunk size
         print("Computing Chunk Size")
         chunk_samples = chunk_duration * sr
@@ -121,9 +116,8 @@ def process_audio(input_file, output_file, chunk_duration=3600, target_sr=16000,
             chunk = y[start:end]
             
             processed_chunk = process_audio_chunk(
-                chunk, sr, noise_thresh,
+                chunk, sr,
                 silence_threshold, 
-                min_silence_duration, 
                 pad_duration
             )
             processed_chunks.append(processed_chunk)
@@ -162,14 +156,13 @@ def process_audio(input_file, output_file, chunk_duration=3600, target_sr=16000,
 # Example usage
 if __name__ == "__main__":
     input_file = "data/raw/audio_original/MP3 12-12-23 SC.mp4"
-    output_file = "data/raw/audio_cleaned/MP3 12-12-23 SC.mp3"
+    output_file = "data/raw/audio_cleaned/ONE.mp3"
     
     process_audio(
         input_file=input_file,
         output_file=output_file,
         chunk_duration=600,  # 10 minute chunks
         target_sr=16000,
-        silence_threshold=-50,
-        min_silence_duration=1.0,
-        pad_duration=0.1
+        silence_threshold=-40,
+        pad_duration=0.3
     )
