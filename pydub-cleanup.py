@@ -119,7 +119,7 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
     
     # Process all MP3 and MP4 files in input directory
-    input_dir = "./data/raw/audio_untrimmed"
+    input_dir = "./data/raw/audio_original"
     audio_files = [f for f in os.listdir(input_dir) if f.lower().endswith(('.mp3', '.mp4'))]
     
     if not audio_files:
