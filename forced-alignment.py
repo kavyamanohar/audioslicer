@@ -2,7 +2,7 @@ import os
 from aeneas.executetask import ExecuteTask
 from aeneas.task import Task
 
-audio_folder = "data/raw/audio_trimmed"  
+audio_folder = "data/raw/audio_cleaned"  
 text_folder = "data/raw/text"  
 srt_folder = "/data/raw/srt"  
 
