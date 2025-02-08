@@ -1,176 +1,125 @@
-import subprocess
-import re
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
+from pathlib import Path
+import ffmpeg
+import tempfile
+import shutil
 import os
 
-def convert_to_mp3(input_path, output_path):
-    """Convert MP4 to MP3 using FFmpeg."""
+def convert_to_mp3(input_file):
+    """Convert input file to MP3 using ffmpeg"""
+    temp_mp3 = tempfile.mktemp(suffix='.mp3')
     try:
-        subprocess.run([
-            "ffmpeg","-y", "-i", input_path, "-q:a", "2", "-acodec", "libmp3lame", output_path
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except subprocess.CalledProcessError:
-        return False
+        (
+            ffmpeg
+            .input(input_file)
+            .output(temp_mp3, acodec='libmp3lame', ar='16000', ac=1)
+            .overwrite_output()
+            .run(capture_stdout=True, capture_stderr=True)
+        )
+        return temp_mp3
+    except ffmpeg.Error as e:
+        print(f"Error converting file: {e.stderr.decode()}")
+        raise
 
-def detect_silence(input_file, noise_db="-50dB", min_duration="0.5"):
-    """Detect silence periods in an audio file using ffmpeg."""
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", input_file,
-        "-af", f"silencedetect=noise={noise_db}:d={min_duration}",
-        "-f", "null",
-        "-"
-    ]
+def apply_bandpass_filter(audio, low_freq=300, high_freq=3000):
+    """
+    Apply bandpass filter to audio
     
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True
-    )
-    _, stderr = process.communicate()
-    
-    silence_starts = []
-    silence_ends = []
-    
-    for line in stderr.split('\n'):
-        if "silence_start" in line:
-            match = re.search(r"silence_start:\s*([\d\.]+)", line)
-            if match:
-                silence_starts.append(float(match.group(1)))
-        elif "silence_end" in line:
-            match = re.search(r"silence_end:\s*([\d\.]+)", line)
-            if match:
-                silence_ends.append(float(match.group(1)))
-    
-    return list(zip(silence_starts, silence_ends))
+    Parameters:
+        audio: AudioSegment object
+        low_freq: Lower frequency cutoff in Hz
+        high_freq: Higher frequency cutoff in Hz
+    """
+    # Apply lowpass and highpass filters in sequence to create a bandpass
+    filtered_audio = audio.low_pass_filter(high_freq).high_pass_filter(low_freq)
+    return filtered_audio
 
-def get_duration(input_file):
-    """Get the duration of an audio file using ffmpeg."""
-    cmd = ["ffmpeg","-y", "-i", input_file, "-f", "null", "-"]
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True
-    )
-    _, stderr = process.communicate()
+def process_audio(input_file, output_file, silence_threshold=-50, min_silence_len=500, 
+                 pad_duration=100, low_freq=300, high_freq=3000):
+    """
+    Process audio file with bandpass filter and silence removal
     
-    duration_match = re.search(r"Duration: (\d{2}):(\d{2}):(\d{2}\.\d+)", stderr)
-    if duration_match:
-        hours, minutes, seconds = map(float, duration_match.groups())
-        return hours * 3600 + minutes * 60 + seconds
-    return None
-
-def trim_audio(input_file, output_file, start_time, end_time):
-    """Trim audio file between start_time and end_time."""
-    cmd = [
-        "ffmpeg", "-y",
-        "-loglevel", "panic",
-        "-i", input_file,
-        "-ss", str(start_time),
-        "-to", str(end_time),
-        "-c", "copy",
-        output_file
-    ]
-    subprocess.run(cmd)
+    Parameters:
+        input_file: Path to input audio file
+        output_file: Path to save processed audio
+        silence_threshold: in dB (negative values, where -50 is a moderate threshold)
+        min_silence_len: minimum length of silence to detect (in milliseconds)
+        pad_duration: amount of padding to keep around non-silent sections (in milliseconds)
+        low_freq: Lower frequency cutoff for bandpass filter in Hz
+        high_freq: Higher frequency cutoff for bandpass filter in Hz
+    """
+    # Create temporary copy of input file
+    temp_input = tempfile.mktemp(suffix=Path(input_file).suffix)
+    shutil.copy2(input_file, temp_input)
     
-def filter_audio(input_file, output_file):
-    """Filter out noise from audio file using ffmpeg."""
-    cmd = [
-        "ffmpeg", "-y",
-        "-loglevel", "panic",
-        "-i", input_file,
-        "-af", "highpass=f=200, anlmdn=s=2, afftdn=nf=-25, lowpass=f=3000",
-        output_file
-    ]
-    subprocess.run(cmd)
-
-def trim_silence(input_file, output_file, noise_db="-50dB", min_duration="2", padding=0.1):
-    """Remove silence from audio file while keeping speech segments."""
-    
-    temp_file = "temp_file.mp3"
-    filter_audio(input_file, temp_file) 
-    silence_periods = detect_silence(temp_file, noise_db, min_duration)
-    os.remove(temp_file)
-    if not silence_periods:
-        print(f"No silence detected in {input_file}")
-        return False
-    
-    total_duration = get_duration(input_file)
-    if total_duration is None:
-        print(f"Could not determine duration for {input_file}")
-        return False
-    
-    # Create segments of non-silence
-    segments = []
-    last_end = 0
-    
-    for start, end in silence_periods:
-        if start - last_end > padding * 2:
-            segment_start = max(0, last_end - padding)
-            segment_end = min(start + padding, total_duration)
-            segments.append((segment_start, segment_end))
-        last_end = end
-    
-    # Add final segment if needed
-    if total_duration - last_end > padding:
-        segment_start = max(0, last_end - padding)
-        segments.append((segment_start, total_duration))
+    try:
+        # Convert input to MP3 if needed
+        if temp_input.endswith(".mp4"):
+            print("Converting to MP3")
+            converted_file = convert_to_mp3(temp_input)
+            Path(temp_input).unlink()
+        else:
+            converted_file = temp_input
+            
+        # Load audio file
+        print("Loading audio file")
+        audio = AudioSegment.from_file(converted_file)
         
-    print("Found", len(segments), "silence segments.")
-    
-    # Create temporary directory for segments
-    temp_dir = "temp_segments"
-    if os.path.exists(temp_dir):
-        for file in os.listdir(temp_dir):
-            os.remove(os.path.join(temp_dir, file))
-    else:
-        os.makedirs(temp_dir)
-    
-    # Create concat file and segments
-    concat_file = os.path.join(temp_dir, "concat.txt")
-    with open(concat_file, "w") as f:
-        for i, (start, end) in enumerate(segments):
-            segment_file = f"segment_{i}.mp3"
-            segment_path = os.path.join(temp_dir, segment_file)
-            trim_audio(input_file, segment_path, start, end)
-            f.write(f"file '{segment_file}'\n")
-    
-    # Change to temp directory for concat operation
-    original_dir = os.getcwd()
-    os.chdir(temp_dir)
-    
-    # Concatenate segments
-    cmd = [
-        "ffmpeg", "-y",
-        "-loglevel", "panic",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", "concat.txt",
-        "-c", "copy",
-        os.path.join("..", output_file)
-    ]
-    subprocess.run(cmd)
-    
-    # Change back to original directory
-    os.chdir(original_dir)
-    
-    # Clean up temporary files
-    for file in os.listdir(temp_dir):
-        os.remove(os.path.join(temp_dir, file))
-    os.rmdir(temp_dir)
-    
-    return True
+        # Convert to mono and set sample rate
+        print("Converting to mono and setting sample rate")
+        audio = audio.set_channels(1).set_frame_rate(16000)
+        
+        # Apply bandpass filter
+        print(f"Applying bandpass filter ({low_freq}Hz - {high_freq}Hz)")
+        filtered_audio = apply_bandpass_filter(audio, low_freq, high_freq)
+        
+        # Split on silence
+        print("Detecting and removing silence")
+        audio_segments = split_on_silence(
+            filtered_audio,
+            min_silence_len=min_silence_len,
+            silence_thresh=silence_threshold,
+            keep_silence=pad_duration
+        )
+        
+        if not audio_segments:
+            print("No non-silent segments found, returning filtered audio")
+            processed_audio = filtered_audio
+        else:
+            # Concatenate non-silent segments
+            print("Concatenating non-silent segments")
+            processed_audio = sum(audio_segments, AudioSegment.empty())
+        
+        # Normalize audio
+        print("Normalizing audio")
+        normalized_audio = processed_audio.normalize()
+        
+        # Export
+        print("Exporting processed audio")
+        normalized_audio.export(
+            output_file,
+            format="mp3",
+            parameters=["-ar", "16000", "-ac", "1", "-q:a", "2"]
+        )
+        
+        print("Processing complete!")
+        
+    finally:
+        # Clean up temporary files
+        Path(converted_file).unlink()
 
 if __name__ == "__main__":
+    # input_file = "data/raw/audio_original/MP3 11-10-23.mp4"
+    # output_file = "data/raw/audio_cleaned/FOUR.mp3"
+
     # Create output directory if it doesn't exist
-    output_dir = "./data/raw/audio_trimmed"
+    output_dir = "./data/raw/audio_cleaned"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     # Process all MP3 and MP4 files in input directory
-    input_dir = "./data/raw/audio_untrimmed"
+    input_dir = "./data/raw/audio_original"
     audio_files = [f for f in os.listdir(input_dir) if f.lower().endswith(('.mp3', '.mp4'))]
     
     if not audio_files:
@@ -181,28 +130,14 @@ if __name__ == "__main__":
     
     for audio_file in audio_files:
         print(f"\nProcessing: {audio_file}")
-        input_path = os.path.join(input_dir, audio_file)
-        output_mp3_path = os.path.join(output_dir, f"{os.path.splitext(audio_file)[0]}.mp3")
-        
-        # Convert MP4 to MP3 if needed
-        if audio_file.lower().endswith(".mp4"):
-            print("converting", input_path, "to mp3" )
-            if not convert_to_mp3(input_path, output_mp3_path):
-                print(f"Failed to convert {audio_file} to MP3")
-                continue
-            input_path = output_mp3_path  # Use converted file for trimming
-        
-        success = trim_silence(
-            input_path,
-            output_mp3_path,
-            noise_db="-45dB",
-            min_duration="1",
-            padding=0.1
+        output_file = os.path.join(output_dir, f"{os.path.splitext(audio_file)[0]}.mp3")
+        input_file = os.path.join(input_dir, audio_file)
+        process_audio(
+            input_file=input_file,
+            output_file=output_file,
+            silence_threshold=-40,    # Adjust based on your audio
+            min_silence_len=2000,      # Minimum silence length in ms
+            pad_duration=500,         # 500ms padding
+            low_freq=200,             # Lower frequency cutoff in Hz
+            high_freq=3000            # Higher frequency cutoff in Hz
         )
-        
-        if success:
-            print(f"Successfully processed: {audio_file}")
-        else:
-            print(f"Failed to process: {audio_file}")
-    
-    print("\nProcessing complete!")
