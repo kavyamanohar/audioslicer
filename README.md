@@ -14,18 +14,20 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 │   │       └── train
 │   └── raw
 │       ├── audio
-│       │   ├── bajaj.mp3
-│       │   └── data.mp3
+│       │   ├── audio1.mp3
+│       │   └── audio2.mp3
 │       └── srt
-│           ├── bajaj.srt
-│           └── data.srt
-├── LICENSE
+│           ├── audio1.srt
+│           └── audio2.srt
+├── audio-cleanup.py
+├── forced-alignment.py
+├──src
+|   └──audio_slicer.py
 ├── main.py
 ├── push_tohub.py
+├── LICENSE
 ├── README.md
-├── requirements.txt
-└── src
-    └──audio_slicer.py
+└── requirements.txt
 ```
 
 ## Prerequisites
@@ -43,26 +45,40 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 
 ## Trim Audio based on Voice Activity Detection
 
-* Place the audio in mp3/mp4 format in `.data/raw/audio_untrimmed` directory
+* Place the audio in mp3/mp4 format in `./data/raw/audio_original` directory
 
 ```
 python audio-cleanup.py
 ```
 
-* Resultant trimmed audio will be palced in `.data/raw/audio_trimmed` in mp3 format
+* Resultant cleanedup audio will be placed in `./data/raw/audio_cleaned` in mp3 format
 
-## How to slice
+## Forced Alignment
 
-* Place the audio in mp3 format in `.data/raw/audio_trimmed` directory
-* Place the subtitle of the audio in `data/raw/srt` directory
+* Ensure cleaned up audios are in  `./data/raw/audio_cleaned`
+* Ensure the cleaned up transcripts created by https://github.com/kavyamanohar/pdf-to-transcript is placed in the `./data/raw/text` directory.
 * Make sure every mp3 file has a matching transcript filename.
+
+
+```
+python forced-alignment.py
+```
+
+* The resultant time-stamps in `.srt` format is stored in `./data/raw/srt`
+
+# How to slice
+
+* Ensure the cleaned audio in mp3 format in `.data/raw/audio_cleaned` directory
+* Ensure subtitle of the audio in `data/raw/srt` directory
+* Make sure every mp3 file has a matching `.srt` filename.
 
 ```
 python main.py
 ```
 
 * `.data/processed/corpus` directory stores the generated slices, by default in the `train` directory and associated metadata in jsonl format.
-* Audio slices will be created and stored in test split, if you pass `test_contains=["TEST", "VALID"]` argument to `audio_slicing_pipeline`. If any audio file contains the string `test` or `valid` in the file name it will be in the test split of the corpus.
+* Audio slices will be created and stored in test split, if you pass `test_contains=["TESTFILE"]` argument to `audio_slicing_pipeline`. If any audio file contains the string `"TESTFILE"` in the file name it will be in the test split of the corpus.
+* Metadata file for the slices are created in jsonline format.
 * If you have your huggingface_hub token stored locally, you can push the corpus sirectly to huggingface hub by:
 
 ```
