@@ -25,6 +25,8 @@ This repo enables easy splitting of audio files based on the subtitle-info in sr
 |   └──audio_slicer.py
 ├── main.py
 ├── push_tohub.py
+├──asr-training
+|   └──whisper-training.py
 ├── LICENSE
 ├── README.md
 └── requirements.txt
@@ -66,7 +68,7 @@ python forced-alignment.py
 
 * The resultant time-stamps in `.srt` format is stored in `./data/raw/srt`
 
-# How to slice
+# Slicing to Create Speech Corpus for ASR
 
 * Ensure the cleaned audio in mp3 format in `.data/raw/audio_cleaned` directory
 * Ensure subtitle of the audio in `data/raw/srt` directory
